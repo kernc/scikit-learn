@@ -201,12 +201,13 @@ def test_kneighbors_classifier_predict_proba():
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
-    real_prob = np.array([[0, 2./3, 1./3],
-                          [1./3, 2./3, 0],
-                          [1./3, 0, 2./3],
-                          [0, 1./3, 2./3],
-                          [2./3, 1./3, 0],
-                          [2./3, 1./3, 0]])
+    # class prob. ordered:    1,    4,    5
+    real_prob = np.array([[0,    2./3, 1./3],
+                          [1./3, 2./3,    0],
+                          [1./3,    0, 2./3],
+                          [0,    1./3, 2./3],
+                          [2./3, 1./3,    0],
+                          [2./3, 1./3,    0]])
     assert_array_equal(real_prob, y_prob)
     
     
