@@ -174,7 +174,7 @@ def test_kneighbors_classifier(n_samples=40,
     """Test k-neighbors classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
     weight_func = _weight_func
 
@@ -191,26 +191,23 @@ def test_kneighbors_classifier(n_samples=40,
 
 def test_kneighbors_classifier_predict_proba():
     """Test KNeighborsClassifier.predict_proba() method"""
-    X = np.array([[0,2,0],
-                  [0,2,1],
-                  [2,0,0],
-                  [2,2,0],
-                  [0,0,2],
-                  [0,0,1]])
+    X = np.array([[0, 2, 0],
+                  [0, 2, 1],
+                  [2, 0, 0],
+                  [2, 2, 0],
+                  [0, 0, 2],
+                  [0, 0, 1]])
     y = np.array([4, 4, 5, 5, 1, 1])
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
-    # class prob. ordered:    1,    4,    5
-    real_prob = np.array([[0,    2./3, 1./3],
-                          [1./3, 2./3,    0],
-                          [1./3,    0, 2./3],
-                          [0,    1./3, 2./3],
-                          [2./3, 1./3,    0],
-                          [2./3, 1./3,    0]])
+    real_prob = np.array([[0, 2. / 3, 1. / 3],
+                          [1. / 3, 2. / 3, 0],
+                          [1. / 3, 0, 2. / 3],
+                          [0, 1. / 3, 2. / 3],
+                          [2. / 3, 1. / 3, 0],
+                          [2. / 3, 1. / 3, 0]])
     assert_array_equal(real_prob, y_prob)
-    
-    
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -221,7 +218,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     """Test radius-based classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
     weight_func = _weight_func
 
@@ -315,7 +312,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
     SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                     dok_matrix, lil_matrix)
