@@ -16,7 +16,8 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 
-from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from .base import (LinearClassifierMixin, SparseCoefMixin, BaseEstimator,
+                   LinearNormalizerMixin)
 from .sag import sag_solver
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
@@ -499,7 +500,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -514,12 +515,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         'sag' and 'lbfgs' solvers support only l2 penalties.
 
     intercept_scaling : float, default 1.
-        This parameter is useful only when the solver 'liblinear' is used
+        Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
+        i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
+        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
@@ -841,7 +843,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         n_samples > n_features.
 
     intercept_scaling : float, default 1.
-        This parameter is useful only when the solver 'liblinear' is used
+        Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -948,7 +950,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         _LearntSelectorMixin, SparseCoefMixin):
+                         _LearntSelectorMixin, SparseCoefMixin,
+                         LinearNormalizerMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
@@ -987,19 +990,35 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the decision function.
+        added to the decision function. If set to false, no intercept
+        will be used in calculations (e.g. data is expected to be already
+        centered).
 
-    intercept_scaling : float, default: 1
-        Useful only if solver is liblinear.
-        when self.fit_intercept is True, instance vector x becomes
+    intercept_scaling : float, default 1.
+        Useful only when the solver 'liblinear' is used
+        and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
+        i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
+        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
+
+    normalize : boolean, optional, default: False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
+
+    copy_X : boolean, optional, default: True
+        If True, X will be copied; else, it may be overwritten.
 
     class_weight : dict or 'balanced', default: None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1007,7 +1026,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1114,9 +1133,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 fit_intercept=True, intercept_scaling=1, normalize=False,
+                 copy_X=True, class_weight=None, random_state=None,
+                 solver='liblinear', max_iter=100, multi_class='ovr',
+                 verbose=0, warm_start=False, n_jobs=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1124,6 +1144,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
+        self.normalize = normalize
+        self.copy_X = copy_X
         self.class_weight = class_weight
         self.random_state = random_state
         self.solver = solver
@@ -1176,6 +1198,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
 
+        X, _, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight, center_y=False)
+
         if self.solver == 'liblinear':
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -1183,6 +1209,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.max_iter, self.tol, self.random_state,
                 sample_weight=sample_weight)
             self.n_iter_ = np.array([n_iter_])
+            self._set_intercept(X_offset, y_offset, X_scale, self.intercept_)
             return self
 
         if self.solver == 'sag':
@@ -1251,6 +1278,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+            self._set_intercept(X_offset, y_offset, X_scale, self.intercept_)
 
         return self
 
@@ -1346,7 +1374,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1425,13 +1453,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
            Stochastic Average Gradient descent solver for 'multinomial' case.
 
     intercept_scaling : float, default 1.
-        Useful only if solver is liblinear.
-        This parameter is useful only when the solver 'liblinear' is used
+        Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
+        i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
+        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight

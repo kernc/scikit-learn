@@ -50,6 +50,10 @@ New features
 Enhancements
 ............
 
+   - :class:`feature_extraction.FeatureHasher` now accepts string values.
+     (`#6173 <https://github.com/scikit-learn/scikit-learn/pull/6173>`_) By `Ryad Zenine`_
+     and `Devashish Deshpande`_.
+
    - The cross-validation iterators are replaced by cross-validation splitters
      available from :mod:`model_selection`. These expose a ``split`` method
      that takes in the data and yields a generator for the different splits.
@@ -116,6 +120,9 @@ Enhancements
 
    - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
      data matrix of original shape. By `Anish Shah`_.
+
+   - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
+     through the parameter ``priors``. By `Guillaume Lemaitre`_.
 
 Bug fixes
 .........
@@ -4121,3 +4128,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jonathan Arfa: https://github.com/jarfa
 
 .. _Anish Shah: https://github.com/AnishShah
+
+.. _Ryad Zenine: https://github.com/ryadzenine
+
+.. _Guillaume Lemaitre: https://github.com/glemaitre
