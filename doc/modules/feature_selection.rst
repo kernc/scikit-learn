@@ -88,9 +88,11 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`, :func:`mutual_info_regression`
+ * For regression: :func:`f_regression`, :func:`mutual_info_regression`,
+   :func:`rrelieff`
 
- * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
+ * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`,
+   :func:`relieff`
 
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture
@@ -113,6 +115,8 @@ samples for accurate estimation.
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_relieff_vs_f_test_mi.py`
 
 .. _rfe:
 

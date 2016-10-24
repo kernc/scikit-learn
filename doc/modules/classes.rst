@@ -539,6 +539,8 @@ From text
    feature_selection.f_regression
    feature_selection.mutual_info_classif
    feature_selection.mutual_info_regression
+   feature_selection.relieff
+   feature_selection.rrelieff
 
 
 .. _gaussian_process_ref:

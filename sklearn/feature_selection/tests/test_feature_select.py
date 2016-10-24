@@ -28,7 +28,7 @@ from sklearn.datasets.samples_generator import (make_classification,
 from sklearn.feature_selection import (
     chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
     mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
-    SelectFdr, SelectFwe, GenericUnivariateSelect)
+    SelectFdr, SelectFwe, GenericUnivariateSelect, relieff, rrelieff)
 
 
 ##############################################################################
@@ -615,6 +615,28 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_relieff_classification():
+    # Test that ReliefF marks the two correct features important in a simple
+    # XOR problem
+    np.random.seed(0)
+    X = np.random.random((100, 20))
+    y = (X[:, 0] > .5) ^ (X[:, 1] > .5)
+    scores = relieff(X, y)
+    assert_equal(sorted(scores.argsort()[-2:]), [0, 1])
+
+
+def test_rrelieff_regression():
+    # Test that RReliefF marks the two correct features important in a simple
+    # XOR problem
+    np.random.seed(0)
+    X = np.random.random((100, 20))
+    y = (X[:, 0] > .5) ^ (X[:, 1] > .5)
+    for weights in ('uniform',
+                    'distance'):
+        scores = rrelieff(X, y, weights=weights)
+        assert_equal(sorted(scores.argsort()[-2:]), [0, 1])
 
 
 if __name__ == '__main__':
